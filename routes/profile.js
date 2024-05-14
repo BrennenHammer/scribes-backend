@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const Post = require('../models/Post');
+const Books = require('../models/Books'); // Changed from 'Post' to 'Books'
 const isAuthenticated = require('../middleware/isAuthenticated');
 
-router.get('/posts', isAuthenticated, (req, res) => {
+router.get('/books', isAuthenticated, (req, res) => {
   const userId = req.query.userId;
-  
+
   if (userId) {
-    Post.find({ author: userId })
+    Books.find({ author: userId }) // Changed from 'Post' to 'Books'
         .populate('author', 'name')
-        .then(posts => res.json(posts))
+        .then(books => res.json(books))
         .catch(error => res.status(500).send(error));
   } else {
     res.status(400).json({ message: 'UserId is required.' });
@@ -17,20 +17,20 @@ router.get('/posts', isAuthenticated, (req, res) => {
 });
 
 
-router.put('/like/:postId', isAuthenticated, (req, res) => {
-    const postId = req.params.postId;
+router.put('/like/:bookId', isAuthenticated, (req, res) => {
+    const bookId = req.params.bookId;
     const userId = req.user._id;
 
-    Post.findById(postId)
-        .then(post => {
-            if (!post.likes.includes(userId)) {
-                post.likes.push(userId);
-                return post.save();
+    Books.findById(bookId) // Changed from 'Post' to 'Books'
+        .then(book => {
+            if (!book.likes.includes(userId)) {
+                book.likes.push(userId);
+                return book.save();
             } else {
                 return res.status(400).json({ message: 'Already liked.' });
             }
         })
-        .then(updatedPost => res.json(updatedPost))
+        .then(updatedBook => res.json(updatedBook))
         .catch(error => res.status(500).send(error));
 });
 

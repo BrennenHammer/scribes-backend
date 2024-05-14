@@ -1,76 +1,16 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 const User = require('../models/User');
-const Post = require('../models/Post')
+const Books = require('../models/Books'); // Changed from 'Post' to 'Books'
 
-const isAuthenticated = require('../middleware/isAuthenticated')
+const isAuthenticated = require('../middleware/isAuthenticated');
 
 router.get('/', (req, res, next) => {
-
   User.find()
     .then((allUsers) => {
-      res.json(allUsers)
-    })
-    .catch((err) => {
-      console.log(err)
-      res.json(err)
-      next(err)
-    })
-
-})
-
-router.get('/detail/:userId', (req, res, next) => {
-
-  const userId = req.params.userId;
-
-  User.findById(userId)
-  .populate('subscribers following posts')
-    .then((foundUser) => {
-      Post.find({author: userId})
-        .then((foundPosts) => {
-
-
-          const { _id, email, username , profilePicture, bio, subscribers, following } = foundUser;
-    
-          const userInfo = { _id, email, username , profilePicture, bio, subscribers, following, posts: foundPosts };
-          res.json(userInfo)
-
-
-        })
-        .catch((err) => {
-          console.log(err)
-          res.json(err)
-          next(err)
-        })
-    })
-    .catch((err) => {
-      console.log(err)
-      res.json(err)
-      next(err)
-    })
-
-})
-
-router.post("/update", isAuthenticated, (req, res, next) => {
-  User.findByIdAndUpdate(
-    req.user._id, 
-    req.body, 
-    { new: true }
-    )
-    .then((updatedUser) => {
-      return updatedUser.populate('posts')
-    })
-    .then((populatedUser) => {
-      const { _id, email, name, posts, location, image } = populatedUser
-      const user = { _id, email, name, posts, location, image };
-      const authToken = jwt.sign(user, process.env.SECRET, {
-        algorithm: "HS256",
-        expiresIn: "6h",
-      })
-      
-      res.json({user, authToken});
+      res.json(allUsers);
     })
     .catch((err) => {
       console.log(err);
@@ -78,4 +18,56 @@ router.post("/update", isAuthenticated, (req, res, next) => {
       next(err);
     });
 });
+
+router.get('/detail/:userId', (req, res, next) => {
+  const userId = req.params.userId;
+
+  User.findById(userId)
+    .populate('subscribers following posts')
+    .then((foundUser) => {
+      Books.find({ author: userId }) // Changed from 'Post' to 'Books'
+        .then((foundBooks) => {
+          const { _id, email, username, profilePicture, bio, subscribers, following } = foundUser;
+          const userInfo = { _id, email, username, profilePicture, bio, subscribers, following, posts: foundBooks };
+          res.json(userInfo);
+        })
+        .catch((err) => {
+          console.log(err);
+          res.json(err);
+          next(err);
+        });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json(err);
+      next(err);
+    });
+});
+
+router.post("/update", isAuthenticated, (req, res, next) => {
+  User.findByIdAndUpdate(
+    req.user._id,
+    req.body,
+    { new: true }
+  )
+    .then((updatedUser) => {
+      return updatedUser.populate('posts');
+    })
+    .then((populatedUser) => {
+      const { _id, email, name, posts, location, image } = populatedUser;
+      const user = { _id, email, name, posts, location, image };
+      const authToken = jwt.sign(user, process.env.SECRET, {
+        algorithm: "HS256",
+        expiresIn: "6h",
+      });
+
+      res.json({ user, authToken });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json(err);
+      next(err);
+    });
+});
+
 module.exports = router;

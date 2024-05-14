@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const postSchema = new Schema({
+const bookSchema = new Schema({
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
@@ -32,20 +32,19 @@ const postSchema = new Schema({
     updatedDate: Date,
     location: String,
     tags: [String]
-});
-postSchema.methods.like = function(userId) {
+});bookSchema.methods.like = function(userId) {
 
     if (!this.likes.includes(userId)) {
         this.likes.push(userId);
     }
 };
-postSchema.methods.unlike = function(userId) {
+bookSchema.methods.unlike = function(userId) {
     const index = this.likes.indexOf(userId);
     if (index !== -1) {
         this.likes.splice(index, 1);
     }
 };
 
-const Post = mongoose.model('Post', postSchema);
+const Book = mongoose.model('Book', bookSchema);
 
-module.exports = Post;
+module.exports = Book;
