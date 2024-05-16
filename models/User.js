@@ -43,7 +43,7 @@ const userSchema = new Schema(
         type: Number,
         default: 0
     },
-    posts: [{type: Schema.Types.ObjectId, ref: 'Post'}]
+    posts: [{type: Schema.Types.ObjectId, ref: 'Books'}]
   },
   {
     timestamps: true,

@@ -32,7 +32,8 @@ const bookSchema = new Schema({
     updatedDate: Date,
     location: String,
     tags: [String]
-});bookSchema.methods.like = function(userId) {
+});
+bookSchema.methods.like = function(userId) {
 
     if (!this.likes.includes(userId)) {
         this.likes.push(userId);
@@ -45,6 +46,6 @@ bookSchema.methods.unlike = function(userId) {
     }
 };
 
-const Book = mongoose.model('Book', bookSchema);
+const Books = mongoose.model('Books', bookSchema);
 
-module.exports = Book;
+module.exports = Books;
