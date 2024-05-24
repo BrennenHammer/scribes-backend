@@ -13,6 +13,7 @@ const subscriberSchema = new Schema({
         required: true
     }
 });
+subscriberSchema.index({ userId: 1, subscriberId: 1 }, { unique: true });
 
 
 const Subscriber = mongoose.model('Subscriber', subscriberSchema);

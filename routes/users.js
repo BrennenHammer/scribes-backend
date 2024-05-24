@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-
+const mongoose = require('mongoose');
 const jwt = require("jsonwebtoken");
 const User = require('../models/User');
-const Books = require('../models/Books'); // Changed from 'Post' to 'Books'
-
+const Books = require('../models/Books');
 const isAuthenticated = require('../middleware/isAuthenticated');
 
+// Get all users
 router.get('/', (req, res, next) => {
   User.find()
     .then((allUsers) => {
@@ -19,31 +19,58 @@ router.get('/', (req, res, next) => {
     });
 });
 
-router.get('/detail/:userId', (req, res, next) => {
-  const userId = req.params.userId;
+router.get('/detail/:userId', async (req, res, next) => {
+  const userId = mongoose.Types.ObjectId(req.params.userId);
 
-  User.findById(userId)
-    .populate('subscribers following posts')
-    .then((foundUser) => {
-      Books.find({ author: userId }) // Changed from 'Post' to 'Books'
-        .then((foundBooks) => {
-          const { _id, email, username, profilePicture, bio, subscribers, following } = foundUser;
-          const userInfo = { _id, email, username, profilePicture, bio, subscribers, following, posts: foundBooks };
-          res.json(userInfo);
-        })
-        .catch((err) => {
-          console.log(err);
-          res.json(err);
-          next(err);
-        });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.json(err);
-      next(err);
-    });
+  try {
+    const userDetails = await User.aggregate([
+      { $match: { _id: userId } },
+      {
+        $lookup: {
+          from: 'subscribers',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'subscribers'
+        }
+      },
+      {
+        $lookup: {
+          from: 'subscribers',
+          localField: '_id',
+          foreignField: 'subscriberId',
+          as: 'following'
+        }
+      },
+      {
+        $lookup: {
+          from: 'books',
+          localField: '_id',
+          foreignField: 'author',
+          as: 'posts'
+        }
+      },
+      {
+        $addFields: {
+          subscribers: { $setUnion: ['$subscribers', '$subscribers'] },
+          following: { $setUnion: ['$following', '$following'] },
+          posts: { $setUnion: ['$posts', '$posts'] }
+        }
+      }
+    ]);
+
+    if (!userDetails.length) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(userDetails[0]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+    next(err);
+  }
 });
 
+// Update user
 router.post("/update", isAuthenticated, (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,

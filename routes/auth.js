@@ -33,7 +33,7 @@ router.post('/signup', (req, res, next) => {
       const salt = bcrypt.genSaltSync(saltRounds);
       const hashedPassword = bcrypt.hashSync(password, salt);
       User.create({ email, password: hashedPassword, username })
-        .then((createdUser) => {
+  ````````      .then((createdUser) => {
           const { email, name, _id, profilePicture } = createdUser;
           const payload = { _id, email, name, profilePicture };
           const authToken = jwt.sign(payload, process.env.SECRET, {
@@ -61,7 +61,6 @@ router.post('/login', (req, res, next) => {
     return;
   }
   User.findOne({ email })
-    .populate('subscribers following posts')
     .then((foundUser) => {
       if (!foundUser) {
         res.status(401).json({ message: 'User not found.' });
@@ -69,8 +68,8 @@ router.post('/login', (req, res, next) => {
       }
       const passwordCorrect = bcrypt.compareSync(password, foundUser.password);
       if (passwordCorrect) {
-        const { _id, email, username, profilePicture, bio, subscribers, following, posts } = foundUser;
-        const payload = { _id, email, username, profilePicture, bio, subscribers, following, posts };
+        const { _id, email, username, profilePicture, bio } = foundUser;
+        const payload = { _id, email, username, profilePicture, bio };
         const authToken = jwt.sign(payload, process.env.SECRET, {
           algorithm: 'HS256',
           expiresIn: '6h',
